@@ -28,5 +28,5 @@ export const STEP_DESCRIPTIONS = [
   { title: "HAVING SUM(amount) > 200", desc: "Filtering groups. Korea ($150) is removed as it doesn't meet the threshold." },
   { title: "ORDER BY amount ASC", desc: "Re-sorting rows by Order Amount. USA ($280) comes before UK ($1200)." },
   { title: "SELECT name, product, amount", desc: "Projection. Focusing on the requested columns." },
-  { title: "LIMIT 1", desc: "Final Cut. Keeping the top 2 results." }
+  { title: "LIMIT 1", desc: "Final Cut. Keeping the top result." }
 ];

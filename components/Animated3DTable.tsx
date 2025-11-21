@@ -130,7 +130,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
       const isSelectOrLater = step >= Step.SELECT;
       
       const colMapping = isSelectOrLater 
-        ? { country: 4, placeholder: -1, count: -1, average: -1, total: 6 } // Centered projection (Country + Total)
+        ? { country: 4, placeholder: -1, count: -1, average: -1, total: 5 } // Centered projection (Country + Total)
         : { country: 3, placeholder: 4, count: 5, average: 6, total: 7 };  // Standard table view with extra AVG column
 
       // Headers
@@ -210,7 +210,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
       // Data Rows
       sortedGroups.forEach((g, idx) => {
         const rowNum = 2 + idx;
-        const isDimmed = step === Step.LIMIT && idx >=2; // LIMIT 2
+        const isDimmed = step === Step.LIMIT && idx >= 1; // LIMIT 1
         
         // Country Cell
         allCells.push({
