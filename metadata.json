@@ -1,0 +1,5 @@
+{
+  "name": "SQL Order execution",
+  "description": "A high-performance interactive visualization simulating SQL query execution using particle physics and Framer Motion.",
+  "requestFramePermissions": []
+}
