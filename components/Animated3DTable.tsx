@@ -488,7 +488,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
             <motion.div 
                 className="grid gap-3"
                 style={{
-                    gridTemplateColumns: 'repeat(9, minmax(0, 1fr))',
+                    gridTemplateColumns: 'repeat(9, minmax(120px, 1fr))',
                     gridTemplateRows: 'repeat(8, 56px)', 
                     transformStyle: 'preserve-3d'
                 }}
