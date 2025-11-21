@@ -24,8 +24,9 @@ export const STEP_DESCRIPTIONS = [
   { title: "FROM & JOIN", desc: "Load USERS (5 rows) and ORDERS (7 rows). Independent datasets in the void." },
   { title: "ON users.id = orders.fkUid", desc: "INNER JOIN. Orders snap to matches. Alice, Bob, and Dieter have multiple orders. Chen, Eiko, and 'Unknown' vanish." },
   { title: "WHERE country IN ('USA', 'Korea', 'UK')", desc: "Filter active. Only USA, Korea and UK. All matches satisfy this condition." },
-  { title: "GROUP BY country", desc: "Grouping by Country. USA and UK clusters form." },
-  { title: "ORDER BY amount ASC", desc: "Re-sorting rows by Order Amount. Mouse and Dock ($80) rise to the top." },
+  { title: "GROUP BY country", desc: "Grouping by Country. USA, UK, and Korea clusters form." },
+  { title: "HAVING SUM(amount) > 200", desc: "Filtering groups. Korea ($150) is removed as it doesn't meet the threshold." },
+  { title: "ORDER BY amount ASC", desc: "Re-sorting rows by Order Amount. USA ($280) comes before UK ($1200)." },
   { title: "SELECT name, product, amount", desc: "Projection. Focusing on the requested columns." },
-  { title: "LIMIT 2", desc: "Final Cut. Keeping only the top 2 cheapest orders." }
+  { title: "LIMIT 1", desc: "Final Cut. Keeping the top 2 results." }
 ];

@@ -43,7 +43,7 @@ const App: React.FC = () => {
         
         {/* Step Progress Indicators */}
         <div className="flex gap-2">
-          {[0, 1, 2, 3, 4, 5, 6].map((s) => (
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((s) => (
             <div 
               key={s} 
               className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]' : 'bg-slate-800'}`}
@@ -93,14 +93,14 @@ const App: React.FC = () => {
 
           <button 
             onClick={nextStep} 
-            disabled={step === 6}
+            disabled={step === 7}
             className={`
               group relative p-4 rounded-full border transition-all duration-300 active:scale-95
-              ${step === 6 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-cyan-500/10 border-cyan-500/50 hover:bg-cyan-500/20 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]'}
+              ${step === 7 ? 'bg-slate-800 border-slate-700 opacity-50 cursor-not-allowed' : 'bg-cyan-500/10 border-cyan-500/50 hover:bg-cyan-500/20 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]'}
             `}
           >
-            <ChevronRight className={`w-6 h-6 ${step === 6 ? 'text-slate-500' : 'text-cyan-400'}`} />
-            {step < 6 && (
+            <ChevronRight className={`w-6 h-6 ${step === 7 ? 'text-slate-500' : 'text-cyan-400'}`} />
+            {step < 7 && (
               <span className="absolute inset-0 rounded-full animate-ping bg-cyan-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             )}
           </button>

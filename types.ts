@@ -24,7 +24,7 @@ export interface GridCell {
   gridCol: number;
   isVisible: boolean;
   isDimmed?: boolean; // For LIMIT step
-  colorTheme: 'cyan' | 'fuchsia' | 'neutral' | 'emerald'; // Added emerald
+  colorTheme: 'cyan' | 'fuchsia' | 'neutral' | 'emerald' | 'emeraldSoft'; // Added emerald
   
   // New properties for Group By visualization
   subtitle?: string;
@@ -55,7 +55,8 @@ export enum Step {
   ON = 1,
   WHERE = 2,
   GROUP_BY = 3,
-  ORDER_BY = 4,
-  SELECT = 5,
-  LIMIT = 6
+  HAVING = 4,
+  ORDER_BY = 5,
+  SELECT = 6,
+  LIMIT = 7
 }

@@ -15,8 +15,9 @@ export const SQLConsole: React.FC<SQLConsoleProps> = ({ step }) => {
     { id: 'on', text: <><span className="text-slate-500 ml-4">ON</span> Users.ID = Orders.UID</>, activeStep: Step.ON },
     { id: 'where', text: <><span className="text-blue-400">WHERE</span> Country <span className="text-blue-400">IN</span> ('USA', 'Korea', 'UK')</>, activeStep: Step.WHERE },
     { id: 'group', text: <><span className="text-purple-400">GROUP BY</span> Country</>, activeStep: Step.GROUP_BY },
+    { id: 'having', text: <><span className="text-blue-400">HAVING</span> SUM(Amount) {'>'} 200</>, activeStep: Step.HAVING },
     { id: 'order', text: <><span className="text-purple-400">ORDER BY</span> Amount <span className="text-purple-400">ASC</span></>, activeStep: Step.ORDER_BY },
-    { id: 'limit', text: <><span className="text-emerald-400">LIMIT</span> 2</>, activeStep: Step.LIMIT },
+    { id: 'limit', text: <><span className="text-emerald-400">LIMIT</span> 1</>, activeStep: Step.LIMIT },
   ];
 
   return (

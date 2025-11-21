@@ -109,6 +109,11 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
         avg: g.count > 0 ? g.total / g.count : 0,
       }));
 
+      // 1b. HAVING Clause Filter
+      if (step >= Step.HAVING) {
+        sortedGroups = sortedGroups.filter(g => g.total > 200);
+      }
+
       // Sort Logic
       if (step >= Step.ORDER_BY) {
         // Sort by Amount ASC (Cheapest first, as per logic)
@@ -154,8 +159,8 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
               gridRow: 1,
               gridCol: colMapping.placeholder,
               isVisible: true,
-              colorTheme: 'neutral',
-              customOpacity: 0.4
+              colorTheme: 'emeraldSoft',
+              customOpacity: 0.8
           });
           // Count Column
            allCells.push({
@@ -168,8 +173,8 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
               gridRow: 1,
               gridCol: colMapping.count,
               isVisible: true,
-              colorTheme: 'neutral',
-              customOpacity: 0.6
+              colorTheme: 'emeraldSoft',
+              customOpacity: 0.8
           });
           // Average Amount Column
            allCells.push({
@@ -182,8 +187,8 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
               gridRow: 1,
               gridCol: colMapping.average,
               isVisible: true,
-              colorTheme: 'neutral',
-              customOpacity: 0.6
+              colorTheme: 'emeraldSoft',
+              customOpacity: 0.8
           });
       }
 
@@ -205,7 +210,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
       // Data Rows
       sortedGroups.forEach((g, idx) => {
         const rowNum = 2 + idx;
-        const isDimmed = step === Step.LIMIT && idx >= 2; // LIMIT 2
+        const isDimmed = step === Step.LIMIT && idx >=2; // LIMIT 2
         
         // Country Cell
         allCells.push({
@@ -233,9 +238,9 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
             gridRow: rowNum,
             gridCol: colMapping.placeholder,
             isVisible: true,
-            colorTheme: 'neutral',
+            colorTheme: 'emeraldSoft',
             isDimmed,
-            customOpacity: 0.4
+            customOpacity: 0.8
           });
 
           // Count Cell
@@ -248,31 +253,31 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
             gridRow: rowNum,
             gridCol: colMapping.count,
             isVisible: true,
-            colorTheme: 'neutral',
+            colorTheme: 'emeraldSoft',
             isDimmed,
-            customOpacity: 0.6
+            customOpacity: 0.8
           });
 
           // Average Amount Cell
           allCells.push({
             key: `grp-${g.country}-avg`,
-            content: `$${g.avg.toFixed(0)}`,
+            content: g.avg.toFixed(0),
             type: 'data',
             source: 'group',
             colName: 'average',
             gridRow: rowNum,
             gridCol: colMapping.average,
             isVisible: true,
-            colorTheme: 'neutral',
+            colorTheme: 'emeraldSoft',
             isDimmed,
-            customOpacity: 0.6
+            customOpacity: 0.8
           });
         }
 
         // Total Cell
         allCells.push({
           key: `grp-${g.country}-t`,
-          content: `$${g.total}`,
+          content: g.total,
           type: 'data',
           source: 'group',
           colName: 'total',
@@ -444,12 +449,13 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
   }, [step]);
 
   // Helper for color resolution
-  const getColors = (theme: 'cyan' | 'fuchsia' | 'neutral' | 'emerald', type: 'header' | 'data') => {
-    if (type === 'header') {
-      switch (theme) {
+  const getColors = (theme: 'cyan' | 'fuchsia' | 'neutral' | 'emerald' | 'emeraldSoft', type: 'header' | 'data') => {
+  if (type === 'header') {
+    switch (theme) {
         case 'cyan': return { bg: 'rgba(6, 182, 212, 0.15)', border: 'rgba(6, 182, 212, 0.4)', text: 'text-cyan-300' };
         case 'fuchsia': return { bg: 'rgba(217, 70, 239, 0.15)', border: 'rgba(217, 70, 239, 0.4)', text: 'text-fuchsia-300' };
         case 'emerald': return { bg: 'rgba(16, 185, 129, 0.20)', border: 'rgba(16, 185, 129, 0.5)', text: 'text-emerald-300' }; // More opacity for emphasis
+        case 'emeraldSoft': return { bg: 'rgba(16, 185, 129, 0.05)', border: 'rgba(16, 185, 129, 0.18)', text: 'text-emerald-200' };
         default: return { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.2)', text: 'text-slate-300' };
       }
     } else {
@@ -458,6 +464,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
         case 'cyan': return { bg: 'rgba(255, 255, 255, 0.02)', border: 'rgba(255, 255, 255, 0.08)', text: 'text-cyan-300' };
         case 'fuchsia': return { bg: 'rgba(255, 255, 255, 0.02)', border: 'rgba(255, 255, 255, 0.08)', text: 'text-fuchsia-300' };
         case 'emerald': return { bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', text: 'text-emerald-400' };
+        case 'emeraldSoft': return { bg: 'rgba(16, 185, 129, 0.02)', border: 'rgba(16, 185, 129, 0.10)', text: 'text-emerald-200' };
         default: return { bg: 'rgba(255,255,255,0.01)', border: 'rgba(255,255,255,0.05)', text: 'text-slate-500' };
       }
     }
@@ -551,7 +558,18 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
                                 
                                 <span className="relative z-10 truncate max-w-full">{cell.content}</span>
                                 {cell.subtitle && (
-                                  <span className="relative z-10 text-[9px] opacity-70 font-normal tracking-tight mt-0.5 uppercase text-slate-300">
+                                  <span
+                                    className="
+                                      relative z-10
+                                      text-sm
+                                      font-normal
+                                      tracking-tight
+                                      mt-0.5
+                                      uppercase
+                                      text-slate-300
+                                      opacity-80
+                                    "
+                                  >
                                     {cell.subtitle}
                                   </span>
                                 )}
