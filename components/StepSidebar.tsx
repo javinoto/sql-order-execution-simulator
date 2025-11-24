@@ -34,18 +34,40 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
   return (
     <aside className="w-full md:w-[480px] lg:w-[480px] h-full bg-[#020617] border-r border-white/5 flex flex-col z-40 shrink-0 relative shadow-2xl">
       
-      {/* 1. HEADER */}
-      <div className="h-20 flex items-end justify-center pb-5 flex-shrink-0 select-none border-b border-white/5 bg-[#020617] z-20">
-         <div className="flex flex-col items-center gap-1.5">
-            <span className="text-lg font-black text-white tracking-[0.3em] uppercase font-sans drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-               SQL ORDER EXECUTION
-            </span>
-            <div className="w-12 h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-80" />
-         </div>
-      </div>
+      {/* 1. HEADER – STATIC TITLE + ANIMATED HALO */}
+      <motion.header
+        className="h-20 flex items-center justify-center flex-shrink-0
+                  select-none border-b border-white/10 bg-[#020617] z-20
+                  relative overflow-hidden"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        {/* Halo animado detrás del texto */}
+        <motion.div
+          className="absolute top-1/2 left-1/2 w-40 h-40 -translate-x-1/2 -translate-y-1/2
+                    rounded-full bg-cyan-500/30 blur-3xl"
+          initial={{ scale: 0.9, opacity: 0.5 }}
+          animate={{
+            scale: [0.2, 1.5, 0.6],
+            opacity: [0.2, 1.5, 0.3],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
 
-      {/* 2. PIPELINE */}
-      <div className="flex-1 overflow-y-auto relative scrollbar-hide flex flex-col py-4 w-full bg-[#020617]">
+        {/* Título estático, sin marco */}
+        <span
+          className="relative z-10 text-sm md:text-base font-bold
+                    tracking-[0.38em] uppercase text-slate-100 font-sans"
+          style={{ letterSpacing: "0.38em" }}
+        >
+          SQL ORDER EXECUTION
+        </span>
+      </motion.header>
+
+
+      {/* 2. PIPELINE - CENTRADO VERTICALMENTE */}
+      <div className="flex-1 overflow-y-auto relative scrollbar-hide flex flex-col justify-center w-full bg-[#020617]">
          
          <div className="space-y-1.5 px-8"> 
              {STEP_DESCRIPTIONS.map((info, index) => {
@@ -57,12 +79,12 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
                  <div 
                     key={index}
                     onClick={() => onStepClick(index)}
-                    className="group cursor-pointer relative flex justify-center items-center py-1" // py-2 da espacio para la placa flotante
+                    className="group cursor-pointer relative flex justify-center items-center py-1"
                  >
                      {/* EL FONDO FLOTANTE (Magic Motion) */}
                      {isActive && (
                         <motion.div
-                            layoutId="activeStepPlate" // Esto conecta todos los pasos
+                            layoutId="activeStepPlate"
                             className="absolute inset-0 bg-[#0B1221] border border-cyan-500/30 rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.1)] z-0"
                             initial={false}
                             transition={{
@@ -79,8 +101,8 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
                          ${isActive 
                              ? 'text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' 
                              : isPast 
-                                ? 'text-slate-600' // Pasados oscuros
-                                : 'text-slate-500 group-hover:text-slate-300' // Futuros
+                                ? 'text-slate-600'
+                                : 'text-slate-500 group-hover:text-slate-300'
                          }
                      `}>
                          {cleanTitle}

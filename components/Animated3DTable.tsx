@@ -1,10 +1,22 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { USERS, ORDERS } from '../constants';
 import { Step, GridCell, UnifiedRow } from '../types';
 
 interface Animated3DTableProps {
   step: Step;
+}
+
+interface FlyingParticle {
+  id: string;
+  content: string | number;
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
+  country: string;
+  delay: number;
+  colorTheme: 'cyan' | 'fuchsia';
 }
 
 // Helper to create a unified row object that tracks logic across all steps
@@ -26,9 +38,9 @@ const generateUnifiedData = (): UnifiedRow[] => {
           user,
           order,
           isMatched: true,
-          isSecondaryUser: idx > 0, // Mark duplicates for Step 0 hiding
+          isSecondaryUser: idx > 0,
           isFilteredByWhere: !['USA', 'Korea', 'UK'].includes(user.country),
-          isFilteredByLimit: false, // Calc later
+          isFilteredByLimit: false,
           originalUserIndex: uIdx,
           originalOrderIndex: originalOrderIndex
         });
@@ -41,7 +53,7 @@ const generateUnifiedData = (): UnifiedRow[] => {
         order: null,
         isMatched: false,
         isSecondaryUser: false,
-        isFilteredByWhere: true, // Logic doesn't matter as they drop in Step 1
+        isFilteredByWhere: true,
         isFilteredByLimit: true,
         originalUserIndex: uIdx,
         originalOrderIndex: -1
@@ -71,20 +83,121 @@ const generateUnifiedData = (): UnifiedRow[] => {
 
 const INITIAL_DATA = generateUnifiedData();
 
+// Country color mapping for particles
+const COUNTRY_COLORS: Record<string, { primary: string; glow: string; particle: string }> = {
+  'USA': { 
+    primary: 'rgba(59, 130, 246, 0.8)', // blue
+    glow: 'rgba(59, 130, 246, 0.4)',
+    particle: '#3b82f6'
+  },
+  'Korea': { 
+    primary: 'rgba(236, 72, 153, 0.8)', // pink
+    glow: 'rgba(236, 72, 153, 0.4)',
+    particle: '#ec4899'
+  },
+  'UK': { 
+    primary: 'rgba(168, 85, 247, 0.8)', // purple
+    glow: 'rgba(168, 85, 247, 0.4)',
+    particle: '#a855f7'
+  }
+};
+
 export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
+  const [showParticles, setShowParticles] = useState(false);
+  const [flyingParticles, setFlyingParticles] = useState<FlyingParticle[]>([]);
+  const [animatingCounters, setAnimatingCounters] = useState(false);
 
   // Calculate dynamic grid columns based on step
   const gridColumns = useMemo(() => {
     if (step >= Step.GROUP_BY) {
-      // GROUP BY and later: 5 or 2 columns centered
       return step >= Step.SELECT ? 2 : 5;
     }
     if (step === Step.FROM_JOIN) {
-      // FROM & JOIN: 8 columns (Users 1-3, gap 4, Orders 5-8)
       return 8;
     }
-    // ON, WHERE: 7 columns (merged view)
     return 7;
+  }, [step]);
+
+  // Generate flying particles when entering GROUP_BY
+  useEffect(() => {
+    if (step === Step.GROUP_BY) {
+      // Recreate WHERE state to get source positions
+      let processedRows = [...INITIAL_DATA];
+      processedRows = processedRows.filter(r => r.isMatched);
+      processedRows = processedRows.filter(r => !r.isFilteredByWhere);
+
+      const particles: FlyingParticle[] = [];
+      
+      // Group by country to determine target positions
+      const countryGroups: Record<string, number> = { 'Korea': 0, 'UK': 1, 'USA': 2 };
+      
+      processedRows.forEach((row, idx) => {
+        if (row.user && row.order) {
+          const country = row.user.country;
+          const sourceRow = 2 + idx; // WHERE row position
+          const targetRow = 2 + countryGroups[country]; // GROUP BY row position
+          
+          // Create particles for each data cell
+          const delay = idx * 0.1; // Stagger the particles
+          
+          // Amount particle (most important)
+          particles.push({
+            id: `particle-${row.order.id}-amt`,
+            content: row.order.amount,
+            startRow: sourceRow,
+            startCol: 7, // amount column in WHERE
+            endRow: targetRow,
+            endCol: 5, // total column in GROUP BY
+            country,
+            delay,
+            colorTheme: 'fuchsia'
+          });
+          
+          // Product particle
+          particles.push({
+            id: `particle-${row.order.id}-prod`,
+            content: row.order.product,
+            startRow: sourceRow,
+            startCol: 6,
+            endRow: targetRow,
+            endCol: 2, // placeholder column
+            country,
+            delay: delay + 0.05,
+            colorTheme: 'fuchsia'
+          });
+          
+          // Country particle (visual emphasis)
+          particles.push({
+            id: `particle-${row.user.id}-ctry-${row.order.id}`,
+            content: country,
+            startRow: sourceRow,
+            startCol: 3,
+            endRow: targetRow,
+            endCol: 1, // country column in GROUP BY
+            country,
+            delay: delay + 0.1,
+            colorTheme: 'cyan'
+          });
+        }
+      });
+
+      setFlyingParticles(particles);
+      setShowParticles(true);
+      setAnimatingCounters(true);
+
+      // Hide particles after animation completes
+      const timer = setTimeout(() => {
+        setShowParticles(false);
+        setFlyingParticles([]);
+        setAnimatingCounters(false);
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setShowParticles(false);
+      setFlyingParticles([]);
+      setAnimatingCounters(false);
+    }
   }, [step]);
 
   // This function computes the EXACT position and visibility of every single cell
@@ -129,10 +242,8 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
 
       // Sort Logic
       if (step >= Step.ORDER_BY) {
-        // Sort by Amount ASC (Cheapest first, as per logic)
         sortedGroups.sort((a, b) => a.total - b.total);
       } else {
-        // Default Group By Sort (Alphabetical)
         sortedGroups.sort((a, b) => a.country.localeCompare(b.country));
       }
 
@@ -140,11 +251,10 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
       const isSelectOrLater = step >= Step.SELECT;
       
       const colMapping = isSelectOrLater 
-        ? { country: 1, placeholder: -1, count: -1, average: -1, total: 2 } // Centered 2-column layout
-        : { country: 1, placeholder: 2, count: 3, average: 4, total: 5 };  // Centered 5-column layout
+        ? { country: 1, placeholder: -1, count: -1, average: -1, total: 2 }
+        : { country: 1, placeholder: 2, count: 3, average: 4, total: 5 };
 
       // Headers
-      // Country (Reuse key 'h_u_ctry' for smooth transition from Step 2)
       allCells.push({
           key: 'h_u_ctry', 
           content: 'COUNTRY',
@@ -159,8 +269,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
       });
 
       if (!isSelectOrLater) {
-          // Placeholder Column
-           allCells.push({
+          allCells.push({
               key: 'h_grp_ph',
               content: '...',
               type: 'header',
@@ -172,8 +281,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
               colorTheme: 'emeraldSoft',
               customOpacity: 0.8
           });
-          // Count Column
-           allCells.push({
+          allCells.push({
               key: 'h_grp_cnt',
               content: 'ORDER COUNT',
               subtitle: 'COUNT(*)',
@@ -186,8 +294,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
               colorTheme: 'emeraldSoft',
               customOpacity: 0.8
           });
-          // Average Amount Column
-           allCells.push({
+          allCells.push({
               key: 'h_grp_avg',
               content: 'AVG AMOUNT',
               subtitle: 'AVG(AMOUNT)',
@@ -202,7 +309,6 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
           });
       }
 
-      // Total Amount (Reuse key 'h_o_amt' for smooth transition from individual amounts)
       allCells.push({
           key: 'h_o_amt', 
           content: 'TOTAL AMOUNT',
@@ -220,7 +326,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
       // Data Rows
       sortedGroups.forEach((g, idx) => {
         const rowNum = 2 + idx;
-        const isDimmed = step === Step.LIMIT && idx >= 1; // LIMIT 1
+        const isDimmed = step === Step.LIMIT && idx >= 1;
         
         // Country Cell
         allCells.push({
@@ -238,7 +344,6 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
         });
 
         if (!isSelectOrLater) {
-          // Placeholder Cell
           allCells.push({
             key: `grp-${g.country}-ph`,
             content: '...',
@@ -253,7 +358,6 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
             customOpacity: 0.8
           });
 
-          // Count Cell
           allCells.push({
             key: `grp-${g.country}-n`,
             content: g.count,
@@ -268,7 +372,6 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
             customOpacity: 0.8
           });
 
-          // Average Amount Cell
           allCells.push({
             key: `grp-${g.country}-avg`,
             content: g.avg.toFixed(0),
@@ -284,7 +387,6 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
           });
         }
 
-        // Total Cell
         allCells.push({
           key: `grp-${g.country}-t`,
           content: g.total,
@@ -304,14 +406,11 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
     }
 
     // --- STANDARD LOGIC FOR STEPS 0, 1, 2 ---
-
-    // --- LAYOUT GENERATION ---
     const HEADER_ROW = 1;
     const START_ROW = 2;
     
     const getCol = (colName: string): number => {
       if (step >= Step.ON) {
-        // Merged view: 7 columns centered (1-7)
         switch (colName) {
           case 'user_id': return 1;
           case 'user_name': return 2;
@@ -323,13 +422,10 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
           default: return -1;
         }
       } else {
-        // FROM & JOIN: Split View - 8 columns total
-        // Users: 1-3, Gap at 4, Orders: 5-8
         switch (colName) {
           case 'user_id': return 1;
           case 'user_name': return 2;
           case 'user_country': return 3;
-          // Gap at 4
           case 'order_id': return 5;
           case 'order_uid': return 6;
           case 'order_product': return 7;
@@ -371,17 +467,14 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
     const rowsToRender = step === Step.FROM_JOIN ? INITIAL_DATA : processedRows;
 
     rowsToRender.forEach((row) => {
-      // Determine Grid Row Index
       let gridRow = -1;
       let isDimmed = false;
 
       if (step === Step.FROM_JOIN) {
-        // In Step 0, layout is static based on original tables
         if (row.user && !row.isSecondaryUser) {
           gridRow = START_ROW + row.originalUserIndex;
         } 
       } else {
-        // In Step >= 1, layout is based on current sort order
         const idx = processedRows.findIndex(r => r.rowId === row.rowId);
         if (idx !== -1) {
            gridRow = START_ROW + idx;
@@ -464,12 +557,11 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
     switch (theme) {
         case 'cyan': return { bg: 'rgba(6, 182, 212, 0.15)', border: 'rgba(6, 182, 212, 0.4)', text: 'text-cyan-300' };
         case 'fuchsia': return { bg: 'rgba(217, 70, 239, 0.15)', border: 'rgba(217, 70, 239, 0.4)', text: 'text-fuchsia-300' };
-        case 'emerald': return { bg: 'rgba(16, 185, 129, 0.20)', border: 'rgba(16, 185, 129, 0.5)', text: 'text-emerald-300' }; // More opacity for emphasis
+        case 'emerald': return { bg: 'rgba(16, 185, 129, 0.20)', border: 'rgba(16, 185, 129, 0.5)', text: 'text-emerald-300' };
         case 'emeraldSoft': return { bg: 'rgba(16, 185, 129, 0.05)', border: 'rgba(16, 185, 129, 0.18)', text: 'text-emerald-200' };
         default: return { bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.2)', text: 'text-slate-300' };
       }
     } else {
-      // Data
       switch (theme) {
         case 'cyan': return { bg: 'rgba(255, 255, 255, 0.02)', border: 'rgba(255, 255, 255, 0.08)', text: 'text-cyan-300' };
         case 'fuchsia': return { bg: 'rgba(255, 255, 255, 0.02)', border: 'rgba(255, 255, 255, 0.08)', text: 'text-fuchsia-300' };
@@ -503,7 +595,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
             style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
         >
             <motion.div 
-                className="grid gap-3 mx-auto"
+                className="grid gap-3 mx-auto relative"
                 style={{
                     gridTemplateColumns: `repeat(${gridColumns}, minmax(120px, 1fr))`,
                     gridTemplateRows: 'repeat(8, 56px)', 
@@ -511,10 +603,130 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
                 }}
                 layout 
             >
+                {/* FLYING PARTICLES LAYER */}
+                <AnimatePresence>
+                    {showParticles && flyingParticles.map((particle) => {
+                        const colors = COUNTRY_COLORS[particle.country];
+                        const cellSize = 120; // minmax base
+                        const gap = 12; // gap-3
+                        
+                        // Calculate pixel positions (approximate)
+                        const startX = (particle.startCol - 1) * (cellSize + gap);
+                        const startY = (particle.startRow - 1) * (56 + gap);
+                        const endX = (particle.endCol - 1) * (cellSize + gap);
+                        const endY = (particle.endRow - 1) * (56 + gap);
+                        
+                        return (
+                            <React.Fragment key={particle.id}>
+                                {/* Trajectory Line */}
+                                <motion.div
+                                    initial={{ opacity: 0, pathLength: 0 }}
+                                    animate={{ 
+                                        opacity: [0, 0.6, 0],
+                                        pathLength: [0, 1, 1]
+                                    }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{
+                                        duration: 2,
+                                        delay: particle.delay,
+                                        ease: "easeInOut"
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        left: startX,
+                                        top: startY,
+                                        width: Math.abs(endX - startX),
+                                        height: Math.abs(endY - startY),
+                                        pointerEvents: 'none',
+                                        zIndex: 10
+                                    }}
+                                >
+                                    <svg width="100%" height="100%" style={{ position: 'absolute' }}>
+                                        <motion.path
+                                            d={`M 0 0 Q ${(endX - startX) / 2} ${(endY - startY) / 2} ${endX - startX} ${endY - startY}`}
+                                            stroke={colors.primary}
+                                            strokeWidth="2"
+                                            fill="none"
+                                            filter="blur(1px)"
+                                            initial={{ pathLength: 0 }}
+                                            animate={{ pathLength: 1 }}
+                                            transition={{ duration: 2, delay: particle.delay }}
+                                        />
+                                    </svg>
+                                </motion.div>
+                                
+                                {/* Flying Particle */}
+                                <motion.div
+                                    initial={{
+                                        opacity: 0.9,
+                                        scale: 0.8,
+                                        x: 0,
+                                        y: 0
+                                    }}
+                                    animate={{
+                                        opacity: [0.9, 1, 0],
+                                        scale: [0.8, 1.2, 0.3],
+                                        x: [0, (endX - startX) * 0.5, endX - startX],
+                                        y: [0, (endY - startY) * 0.3, endY - startY]
+                                    }}
+                                    exit={{ opacity: 0, scale: 0 }}
+                                    transition={{
+                                        duration: 2.5,
+                                        delay: particle.delay,
+                                        ease: [0.43, 0.13, 0.23, 0.96]
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        left: startX,
+                                        top: startY,
+                                        width: cellSize,
+                                        height: 56,
+                                        pointerEvents: 'none',
+                                        zIndex: 15
+                                    }}
+                                    className="flex items-center justify-center"
+                                >
+                                    <div 
+                                        className="relative w-full h-full rounded-md flex items-center justify-center font-mono text-sm font-bold"
+                                        style={{
+                                            backgroundColor: colors.primary,
+                                            boxShadow: `0 0 20px ${colors.glow}, 0 0 40px ${colors.glow}`,
+                                            border: `2px solid ${colors.particle}`
+                                        }}
+                                    >
+                                        <span className="text-white drop-shadow-lg">{particle.content}</span>
+                                        
+                                        {/* Particle glow effect */}
+                                        <motion.div
+                                            className="absolute inset-0 rounded-md"
+                                            animate={{
+                                                opacity: [0.5, 1, 0.5],
+                                                scale: [1, 1.1, 1]
+                                            }}
+                                            transition={{
+                                                duration: 0.8,
+                                                repeat: Infinity,
+                                                ease: "easeInOut"
+                                            }}
+                                            style={{
+                                                background: `radial-gradient(circle, ${colors.glow} 0%, transparent 70%)`,
+                                            }}
+                                        />
+                                    </div>
+                                </motion.div>
+                            </React.Fragment>
+                        );
+                    })}
+                </AnimatePresence>
+
+                {/* REGULAR CELLS */}
                 <AnimatePresence mode="popLayout"> 
                     {cells.map((cell) => {
                         const colors = getColors(cell.colorTheme, cell.type);
                         const finalOpacity = cell.isDimmed ? 0.15 : (cell.customOpacity ?? 1);
+                        
+                        // Special handling for group data cells during animation
+                        const isGroupCell = step === Step.GROUP_BY && cell.type === 'data' && cell.source === 'group';
                         
                         return (
                             <motion.div
@@ -566,20 +778,48 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
                                     }`} />
                                 )}
                                 
+                                {/* Absorption effect for group cells */}
+                                {isGroupCell && showParticles && (
+                                    <>
+                                        {/* Pulsing ring effect */}
+                                        <motion.div
+                                            className="absolute inset-0 rounded-md pointer-events-none"
+                                            animate={{
+                                                boxShadow: [
+                                                    '0 0 0px rgba(16, 185, 129, 0)',
+                                                    '0 0 30px rgba(16, 185, 129, 0.6)',
+                                                    '0 0 0px rgba(16, 185, 129, 0)'
+                                                ],
+                                                scale: [1, 1.05, 1]
+                                            }}
+                                            transition={{
+                                                duration: 2,
+                                                repeat: 2,
+                                                ease: "easeInOut"
+                                            }}
+                                        />
+                                        
+                                        {/* Energy burst */}
+                                        <motion.div
+                                            className="absolute inset-0 bg-gradient-radial from-emerald-400/40 to-transparent rounded-md pointer-events-none"
+                                            initial={{ opacity: 0, scale: 0.5 }}
+                                            animate={{
+                                                opacity: [0, 0.8, 0],
+                                                scale: [0.5, 1.5, 2]
+                                            }}
+                                            transition={{
+                                                duration: 1.5,
+                                                repeat: 2,
+                                                ease: "easeOut",
+                                                repeatDelay: 0.8
+                                            }}
+                                        />
+                                    </>
+                                )}
+                                
                                 <span className="relative z-10 truncate max-w-full">{cell.content}</span>
                                 {cell.subtitle && (
-                                  <span
-                                    className="
-                                      relative z-10
-                                      text-sm
-                                      font-normal
-                                      tracking-tight
-                                      mt-0.5
-                                      uppercase
-                                      text-slate-300
-                                      opacity-80
-                                    "
-                                  >
+                                  <span className="relative z-10 text-sm font-normal tracking-tight mt-0.5 uppercase text-slate-300 opacity-80">
                                     {cell.subtitle}
                                   </span>
                                 )}

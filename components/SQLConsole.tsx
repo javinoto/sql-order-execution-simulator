@@ -48,9 +48,9 @@ export const SQLConsole: React.FC<SQLConsoleProps> = ({ step, onNext, onPrev, on
   ];
 
   return (
-    <div className="w-full flex flex-col gap-3"> {/* Gap reducido entre visor y controles */}
+    <div className="w-full flex flex-col gap-3">
       
-      {/* 1. VISOR DE CÓDIGO (Altura ajustada para compacidad) */}
+      {/* 1. VISOR DE CÓDIGO */}
       <div className="relative bg-[#0B1121] border border-white/10 rounded-xl overflow-hidden shadow-inner flex flex-col h-[318px]">
           
           {/* Fondo Grid sutil */}
@@ -72,7 +72,6 @@ export const SQLConsole: React.FC<SQLConsoleProps> = ({ step, onNext, onPrev, on
                             opacity: isActive ? 1 : 0.5, 
                             backgroundColor: isActive ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
                          }}
-                         // Padding muy compacto (py-2) para que parezca código real
                          className={`
                             relative flex items-center w-full px-4 py-2 transition-colors duration-200
                             ${isActive ? 'text-white font-semibold' : 'text-slate-500'}
@@ -85,11 +84,6 @@ export const SQLConsole: React.FC<SQLConsoleProps> = ({ step, onNext, onPrev, on
                                 className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-400" 
                             />
                          )}
-
-                         {/* Número de Línea */}
-                         <span className={`mr-4 select-none text-xs w-6 text-right font-mono ${isActive ? 'text-cyan-500' : 'opacity-30'}`}>
-                            {idx + 1}
-                         </span>
                          
                          {/* Código */}
                          <span className="truncate text-[15px] tracking-wide font-medium leading-tight">
