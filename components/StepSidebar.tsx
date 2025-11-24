@@ -34,7 +34,7 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
   return (
     <aside className="w-full md:w-[480px] lg:w-[480px] h-full bg-[#020617] border-r border-white/5 flex flex-col z-40 shrink-0 relative shadow-2xl">
       
-      {/* 1. HEADER – STATIC TITLE + ANIMATED HALO */}
+      {/* 1. HEADER – STATIC TITLE + FULL-WIDTH SOFT HALO */}
       <motion.header
         className="h-20 flex items-center justify-center flex-shrink-0
                   select-none border-b border-white/10 bg-[#020617] z-20
@@ -43,16 +43,22 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        {/* Halo animado detrás del texto */}
+        {/* Halo animado que recorre todo el box usando background-position */}
         <motion.div
-          className="absolute top-1/2 left-1/2 w-40 h-40 -translate-x-1/2 -translate-y-1/2
-                    rounded-full bg-cyan-500/30 blur-3xl"
-          initial={{ scale: 0.9, opacity: 0.5 }}
-          animate={{
-            scale: [0.2, 1.5, 0.6],
-            opacity: [0.2, 1.5, 0.3],
+          className="absolute inset-y-2 inset-x-0 blur-3xl pointer-events-none"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, transparent, rgba(34,211,238,0.5), transparent)",
+            backgroundSize: "200% 100%",   // más ancho que el header
+            backgroundRepeat: "no-repeat",
           }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          initial={{ backgroundPositionX: "0%" }}
+          animate={{ backgroundPositionX: ["0%", "100%", "0%"] }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
         />
 
         {/* Título estático, sin marco */}
@@ -64,6 +70,7 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
           SQL ORDER EXECUTION
         </span>
       </motion.header>
+
 
 
       {/* 2. PIPELINE - CENTRADO VERTICALMENTE */}

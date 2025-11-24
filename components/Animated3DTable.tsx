@@ -766,7 +766,12 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
                                     font-mono select-none overflow-hidden px-2
                                     ${cell.type === 'header' ? 'font-bold tracking-wider' : 'font-normal text-sm'}
                                     ${colors.text}
-                                    ${cell.colName === 'order_uid' && step >= Step.ON && step < Step.GROUP_BY ? 'ring-1 ring-fuchsia-500/50 bg-fuchsia-500/10' : ''} 
+                                    
+                                    {/* NUEVO: Resaltado para USER ID (Cyan) en las fases ON y WHERE */}
+                                    ${cell.colName === 'user_id' && step >= Step.ON && step < Step.GROUP_BY ? 'ring-1 ring-cyan-500/50 bg-cyan-500/10' : ''}
+                                    
+                                    {/* Mantenemos el Resaltado para UID (Fuchsia) */}
+                                    ${cell.colName === 'order_uid' && step >= Step.ON && step < Step.GROUP_BY ? 'ring-1 ring-fuchsia-500/50 bg-fuchsia-500/10' : ''}
                                 `}
                             >
                                 {cell.type === 'header' && (
