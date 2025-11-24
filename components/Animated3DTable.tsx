@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { USERS, ORDERS } from '../constants';
@@ -74,6 +73,20 @@ const INITIAL_DATA = generateUnifiedData();
 
 export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
 
+  // Calculate dynamic grid columns based on step
+  const gridColumns = useMemo(() => {
+    if (step >= Step.GROUP_BY) {
+      // GROUP BY and later: 5 or 2 columns centered
+      return step >= Step.SELECT ? 2 : 5;
+    }
+    if (step === Step.FROM_JOIN) {
+      // FROM & JOIN: 8 columns (Users 1-3, gap 4, Orders 5-8)
+      return 8;
+    }
+    // ON, WHERE: 7 columns (merged view)
+    return 7;
+  }, [step]);
+
   // This function computes the EXACT position and visibility of every single cell
   const cells = useMemo(() => {
     const allCells: GridCell[] = [];
@@ -123,15 +136,12 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
         sortedGroups.sort((a, b) => a.country.localeCompare(b.country));
       }
 
-      // 2. Define Columns based on Step
-      // WHERE -> GROUP BY transition:
-      // Country stays at 3. New columns at 4, 5, 7.
-      // SELECT: Center Country and Total (e.g., 4 and 6).
+      // 2. Define Columns based on Step - CENTERED LAYOUT
       const isSelectOrLater = step >= Step.SELECT;
       
       const colMapping = isSelectOrLater 
-        ? { country: 4, placeholder: -1, count: -1, average: -1, total: 5 } // Centered projection (Country + Total)
-        : { country: 3, placeholder: 4, count: 5, average: 6, total: 7 };  // Standard table view with extra AVG column
+        ? { country: 1, placeholder: -1, count: -1, average: -1, total: 2 } // Centered 2-column layout
+        : { country: 1, placeholder: 2, count: 3, average: 4, total: 5 };  // Centered 5-column layout
 
       // Headers
       // Country (Reuse key 'h_u_ctry' for smooth transition from Step 2)
@@ -300,30 +310,30 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
     const START_ROW = 2;
     
     const getCol = (colName: string): number => {
-      // Note: SELECT step handled in Group Block above for aggregation flow.
-      // This block handles standard row projection.
       if (step >= Step.ON) {
+        // Merged view: 7 columns centered (1-7)
         switch (colName) {
           case 'user_id': return 1;
           case 'user_name': return 2;
           case 'user_country': return 3;
-          case 'order_uid': return 4; // Visually "Snaps" to User Table
+          case 'order_uid': return 4;
           case 'order_id': return 5;
           case 'order_product': return 6;
           case 'order_amount': return 7;
           default: return -1;
         }
       } else {
-        // FROM & JOIN: Split View
+        // FROM & JOIN: Split View - 8 columns total
+        // Users: 1-3, Gap at 4, Orders: 5-8
         switch (colName) {
           case 'user_id': return 1;
           case 'user_name': return 2;
           case 'user_country': return 3;
-          // Gap at 4, 5
-          case 'order_id': return 6;
-          case 'order_uid': return 7;
-          case 'order_product': return 8;
-          case 'order_amount': return 9;
+          // Gap at 4
+          case 'order_id': return 5;
+          case 'order_uid': return 6;
+          case 'order_product': return 7;
+          case 'order_amount': return 8;
           default: return -1;
         }
       }
@@ -493,9 +503,9 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
             style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}
         >
             <motion.div 
-                className="grid gap-3"
+                className="grid gap-3 mx-auto"
                 style={{
-                    gridTemplateColumns: 'repeat(9, minmax(120px, 1fr))',
+                    gridTemplateColumns: `repeat(${gridColumns}, minmax(120px, 1fr))`,
                     gridTemplateRows: 'repeat(8, 56px)', 
                     transformStyle: 'preserve-3d'
                 }}
