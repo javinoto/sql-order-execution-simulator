@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Info } from 'lucide-react'; // Importamos icono para el popup
 import { USERS, ORDERS } from '../constants';
 import { Step, GridCell, UnifiedRow } from '../types';
 
@@ -19,7 +20,6 @@ interface FlyingParticle {
   colorTheme: 'cyan' | 'fuchsia';
 }
 
-// Tiempos ajustados para "Slow Motion" fluido
 const ANIM_DURATION = {
     particleFlight: 2.5,
     ghostFade: 2.0,
@@ -96,8 +96,6 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
   const gridColumns = useMemo(() => {
     if (step >= Step.GROUP_BY) {
       if (showGhosts) return 7; 
-      // Si estamos en SELECT, mostramos solo las columnas finales (Country, Total)
-      // Si estamos en GROUP BY/HAVING/ORDER, mostramos las 5 columnas (Country, ..., Count, Avg, Total)
       return step >= Step.SELECT ? 2 : 5;
     }
     if (step === Step.FROM_JOIN) return 8;
@@ -113,8 +111,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
         .filter(r => !r.isFilteredByWhere);
 
       const particles: FlyingParticle[] = [];
-      // Definir índices fijos para los países (para que siempre caigan en la misma fila)
-      const countryGroups: Record<string, number> = { 'Korea': 0, 'UK': 1, 'USA': 2 }; // Orden alfabético inicial
+      const countryGroups: Record<string, number> = { 'Korea': 0, 'UK': 1, 'USA': 2 }; 
       
       processedRows.forEach((row, idx) => {
         if (row.user && row.order) {
@@ -123,27 +120,25 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
           const targetRow = 2 + countryGroups[country];
           const delay = idx * 0.15; 
           
-          // A. Partícula de AMOUNT -> TOTAL
           particles.push({
             id: `particle-${row.order.id}-amt`,
             content: row.order.amount,
             startRow: sourceRow,
-            startCol: 7, // Columna Amount en WHERE
+            startCol: 7, 
             endRow: targetRow,
-            endCol: 5,   // Columna Total en GROUP BY
+            endCol: 5,   
             country,
             delay,
             colorTheme: 'fuchsia'
           });
           
-          // B. Partícula de COUNTRY -> COUNTRY
           particles.push({
             id: `particle-${row.user.id}-ctry-${row.order.id}`,
             content: country,
             startRow: sourceRow,
-            startCol: 3, // Columna Country en WHERE
+            startCol: 3, 
             endRow: targetRow,
-            endCol: 1,   // Columna Country en GROUP BY
+            endCol: 1,   
             country,
             delay: delay + 0.1,
             colorTheme: 'cyan'
@@ -178,14 +173,13 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
     if (step >= Step.ON) processedRows = processedRows.filter(r => r.isMatched);
     if (step >= Step.WHERE) processedRows = processedRows.filter(r => !r.isFilteredByWhere);
 
-    // --- GROUP BY LOGIC (Por COUNTRY) ---
     if (step >= Step.GROUP_BY) {
       
       const groups: Record<string, { country: string; count: number; total: number; avg: number }> = {};
 
       processedRows.forEach(r => {
         if (r.user && r.order) {
-          const c = r.user.country; // Agrupando por PAÍS
+          const c = r.user.country;
           if (!groups[c]) groups[c] = { country: c, count: 0, total: 0, avg: 0 };
           groups[c].count += 1;
           groups[c].total += r.order.amount;
@@ -200,44 +194,34 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
       if (step >= Step.HAVING) sortedGroups = sortedGroups.filter(g => g.total > 200);
       
       if (step >= Step.ORDER_BY) {
-          sortedGroups.sort((a, b) => a.total - b.total); // Ordenar por Total
+          sortedGroups.sort((a, b) => a.total - b.total);
       } else {
-          sortedGroups.sort((a, b) => a.country.localeCompare(b.country)); // Orden alfabético
+          sortedGroups.sort((a, b) => a.country.localeCompare(b.country));
       }
 
       const isSelectOrLater = step >= Step.SELECT;
-      
-      // Mapeo de columnas: 
-      // Si es SELECT: Solo Country(1) y Total(2)
-      // Si es GROUP: Country(1), Placeholder(2), Count(3), Avg(4), Total(5)
       const colMapping = isSelectOrLater 
         ? { country: 1, total: 2, placeholder: -1, count: -1, average: -1 } 
         : { country: 1, placeholder: 2, count: 3, average: 4, total: 5 };
 
-      // --- HEADERS ---
-      // 1. Country (Emerald - Principal)
+      // Headers
       allCells.push({ key: 'h_grp_ctry', content: 'COUNTRY', type: 'header', source: 'group', colName: 'country', gridRow: 1, gridCol: colMapping.country, isVisible: true, colorTheme: 'emerald', customOpacity: 1 });
-      
-      // 5. Total (Emerald - Principal)
       allCells.push({ key: 'h_grp_total', content: 'TOTAL AMOUNT', subtitle: 'SUM(AMOUNT)', type: 'header', source: 'group', colName: 'total', gridRow: 1, gridCol: colMapping.total, isVisible: true, colorTheme: 'emerald', customOpacity: 1 });
 
       if (!isSelectOrLater) {
-          // Extra Columns (Emerald Soft - Muted)
           allCells.push({ key: 'h_grp_ph', content: '...', type: 'header', source: 'group', colName: 'placeholder', gridRow: 1, gridCol: colMapping.placeholder, isVisible: true, colorTheme: 'emeraldSoft', customOpacity: 0.8 });
           allCells.push({ key: 'h_grp_cnt', content: 'ORDER COUNT', subtitle: 'COUNT(*)', type: 'header', source: 'group', colName: 'count', gridRow: 1, gridCol: colMapping.count, isVisible: true, colorTheme: 'emeraldSoft', customOpacity: 0.8 });
           allCells.push({ key: 'h_grp_avg', content: 'AVG AMOUNT', subtitle: 'AVG(AMOUNT)', type: 'header', source: 'group', colName: 'average', gridRow: 1, gridCol: colMapping.average, isVisible: true, colorTheme: 'emeraldSoft', customOpacity: 0.8 });
       }
 
-      // --- DATA ROWS ---
+      // Group Rows
       sortedGroups.forEach((g, idx) => {
         const rowNum = 2 + idx;
         const isDimmed = step === Step.LIMIT && idx >= 1;
         
-        // Country & Total (Principal)
         allCells.push({ key: `grp-${g.country}-c`, content: g.country, type: 'data', source: 'group', colName: 'country', gridRow: rowNum, gridCol: colMapping.country, isVisible: true, colorTheme: 'emerald', isDimmed, customOpacity: 1 });
         allCells.push({ key: `grp-${g.country}-t`, content: g.total, type: 'data', source: 'group', colName: 'total', gridRow: rowNum, gridCol: colMapping.total, isVisible: true, colorTheme: 'emerald', isDimmed, customOpacity: 1 });
 
-        // Extra Data (Muted)
         if (!isSelectOrLater) {
           allCells.push({ key: `grp-${g.country}-ph`, content: '...', type: 'data', source: 'group', colName: 'placeholder', gridRow: rowNum, gridCol: colMapping.placeholder, isVisible: true, colorTheme: 'emeraldSoft', isDimmed, customOpacity: 0.8 });
           allCells.push({ key: `grp-${g.country}-cnt`, content: g.count, type: 'data', source: 'group', colName: 'count', gridRow: rowNum, gridCol: colMapping.count, isVisible: true, colorTheme: 'emeraldSoft', isDimmed, customOpacity: 0.8 });
@@ -245,74 +229,45 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
         }
       });
 
-      // --- GHOST ROWS (Transición) ---
+      // Ghost Rows
       if (showGhosts) {
          const START_ROW = 2;
          processedRows.forEach((row, idx) => {
              const gridRow = START_ROW + idx;
              const getGhostCol = (colName: string): number => {
                 switch (colName) {
-                  case 'user_id': return 1;
-                  case 'user_name': return 2;
-                  case 'user_country': return 3;
-                  case 'order_uid': return 4;
-                  case 'order_id': return 5;
-                  case 'order_product': return 6;
-                  case 'order_amount': return 7;
+                  case 'user_id': return 1; case 'user_name': return 2; case 'user_country': return 3;
+                  case 'order_uid': return 4; case 'order_id': return 5; case 'order_product': return 6; case 'order_amount': return 7;
                   default: return -1;
                 }
              };
 
              if (row.user) {
-                const uCols = [
-                    { val: row.user.id, col: 'user_id', k: 'id' },
-                    { val: row.user.name, col: 'user_name', k: 'name' },
-                    { val: row.user.country, col: 'user_country', k: 'ctry' } // RELEVANTE (Grouping Key)
-                ];
+                const uCols = [{ val: row.user.id, col: 'user_id', k: 'id' }, { val: row.user.name, col: 'user_name', k: 'name' }, { val: row.user.country, col: 'user_country', k: 'ctry' }];
                 uCols.forEach(c => {
                     const gc = getGhostCol(c.col);
                     if (gc !== -1) {
                         const isRelevant = c.col === 'user_country';
-                        allCells.push({
-                           key: `u-${row.user!.id}-${c.k}${row.isSecondaryUser ? '-dup' : ''}`, 
-                           content: c.val,
-                           type: 'data', source: 'user', colName: c.col, gridRow: gridRow, gridCol: gc, isVisible: true, isGhost: true, 
-                           customOpacity: isRelevant ? 0.6 : 0.1, 
-                           colorTheme: 'cyan'
-                        });
+                        allCells.push({ key: `u-${row.user!.id}-${c.k}${row.isSecondaryUser?'-dup':''}`, content: c.val, type: 'data', source: 'user', colName: c.col, gridRow: gridRow, gridCol: gc, isVisible: true, isGhost: true, customOpacity: isRelevant ? 0.6 : 0.1, colorTheme: 'cyan' });
                     }
                 });
              }
 
              if (row.order) {
-                 const oCols = [
-                      { val: row.order.id, col: 'order_id', k: 'oid' },
-                      { val: row.order.fkUid, col: 'order_uid', k: 'uid' },
-                      { val: row.order.product, col: 'order_product', k: 'prod' },
-                      { val: row.order.amount, col: 'order_amount', k: 'amt' } // RELEVANTE (Aggregation)
-                  ];
+                 const oCols = [{ val: row.order.id, col: 'order_id', k: 'oid' }, { val: row.order.fkUid, col: 'order_uid', k: 'uid' }, { val: row.order.product, col: 'order_product', k: 'prod' }, { val: row.order.amount, col: 'order_amount', k: 'amt' }];
                   oCols.forEach(c => {
                       const gc = getGhostCol(c.col);
                       if (gc !== -1) {
                           const isRelevant = c.col === 'order_amount';
-                          allCells.push({
-                              key: `o-${row.order!.id}-${c.k}`,
-                              content: c.val,
-                              type: 'data', source: 'order', colName: c.col, gridRow: gridRow, gridCol: gc, isVisible: true, isGhost: true,
-                              customOpacity: isRelevant ? 0.6 : 0.1,
-                              colorTheme: 'fuchsia'
-                          });
+                          allCells.push({ key: `o-${row.order!.id}-${c.k}`, content: c.val, type: 'data', source: 'order', colName: c.col, gridRow: gridRow, gridCol: gc, isVisible: true, isGhost: true, customOpacity: isRelevant ? 0.6 : 0.1, colorTheme: 'fuchsia' });
                       }
                   });
              }
          });
       }
-
       return allCells;
     }
 
-    // --- STANDARD LOGIC (Steps 0, 1, 2) ---
-    // (Esta parte no cambia, se mantiene la lógica original)
     const HEADER_ROW = 1;
     const START_ROW = 2;
     const getCol = (colName: string): number => {
@@ -400,6 +355,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
   return (
     <div className="relative w-full h-[600px] flex justify-center items-center perspective-1000 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none opacity-5" style={{ backgroundImage: 'radial-gradient(circle at center, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        
         <motion.div className="w-full max-w-6xl preserve-3d" animate={{ rotateX: 15, y: [0, -15, 0] }} transition={{ y: { repeat: Infinity, duration: 6, ease: "easeInOut" }, rotateX: { duration: 1 }}} style={{ perspective: '1200px', transformStyle: 'preserve-3d' }}>
             <motion.div className="grid gap-3 mx-auto relative" style={{ gridTemplateColumns: `repeat(${gridColumns}, minmax(120px, 1fr))`, gridTemplateRows: 'repeat(8, 56px)', transformStyle: 'preserve-3d' }} layout transition={ANIM_DURATION.layoutSpring}>
                 
@@ -423,7 +379,7 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
                     })}
                 </AnimatePresence>
 
-                {/* CELDAS */}
+                {/* CELDAS (Con tu configuración de animación personalizada) */}
                 <AnimatePresence mode="popLayout"> 
                     {cells.map((cell) => {
                         const colors = getColors(cell.colorTheme, cell.type);
@@ -444,15 +400,23 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
                                 exit={{ opacity: 0, scale: 0.5, z: -100, filter: "blur(10px)" }}
                                 transition={{ 
                                     layout: ANIM_DURATION.layoutSpring,
-                                    opacity: { duration: 2 }, // Ajustado por el usuario
-                                    scale: { duration: 1.5 },   // Ajustado por el usuario
-                                    filter: { duration: 1 } // Ajustado por el usuario
+                                    opacity: { duration: 2 }, // Ajuste usuario
+                                    scale: { duration: 1.5 }, // Ajuste usuario
+                                    filter: { duration: 1 }   // Ajuste usuario
                                 }}
                                 style={{ gridColumnStart: cell.gridCol, gridColumnEnd: "span 1", gridRowStart: cell.gridRow, gridRowEnd: "span 1", zIndex: cell.type === 'header' ? 50 : (cell.isGhost ? 0 : 20), willChange: "transform, opacity, grid-area" }}
                                 className={`relative flex flex-col items-center justify-center rounded-md border backdrop-blur-sm shadow-sm font-mono select-none overflow-hidden px-2 ${cell.type === 'header' ? 'font-bold tracking-wider' : 'font-normal text-sm'} ${colors.text} ${cell.colName === 'user_id' && step >= Step.ON && step < Step.GROUP_BY ? 'ring-1 ring-cyan-500/50 bg-cyan-500/10' : ''} ${cell.colName === 'order_uid' && step >= Step.ON && step < Step.GROUP_BY ? 'ring-1 ring-fuchsia-500/50 bg-fuchsia-500/10' : ''}`}
                             >
                                 {cell.type === 'header' && <div className={`absolute inset-0 opacity-20 bg-gradient-to-br ${cell.colorTheme === 'cyan' ? 'from-cyan-400 to-transparent' : cell.colorTheme === 'fuchsia' ? 'from-fuchsia-400 to-transparent' : cell.colorTheme === 'emerald' ? 'from-emerald-400 to-transparent' : 'from-slate-400 to-transparent'}`} />}
-                                {isGroupCell && showParticles && <motion.div className="absolute inset-0 rounded-md pointer-events-none" animate={{ boxShadow: ['0 0 0px rgba(16, 185, 129, 0)', '0 0 30px rgba(16, 185, 129, 0.6)', '0 0 0px rgba(16, 185, 129, 0)'] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />}
+                                
+                                {isGroupCell && showParticles && (
+                                    <motion.div 
+                                        className="absolute inset-0 rounded-md pointer-events-none" 
+                                        animate={{ boxShadow: ['0 0 0px rgba(16, 185, 129, 0)', '0 0 30px rgba(16, 185, 129, 0.6)', '0 0 0px rgba(16, 185, 129, 0)'] }} 
+                                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} 
+                                    />
+                                )}
+                                
                                 <span className="relative z-10 truncate max-w-full">{cell.content}</span>
                                 {cell.subtitle && <span className="relative z-10 text-sm font-normal tracking-tight mt-0.5 uppercase text-slate-300 opacity-80">{cell.subtitle}</span>}
                             </motion.div>
@@ -461,6 +425,32 @@ export const Animated3DTable: React.FC<Animated3DTableProps> = ({ step }) => {
                 </AnimatePresence>
             </motion.div>
         </motion.div>
+
+        {/* POP-UP INFORMATIVO (Solo en GROUP BY) */}
+        <AnimatePresence>
+          {step === Step.GROUP_BY && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="absolute bottom-6 right-6 max-w-[280px] bg-[#0f172a]/95 border border-emerald-500/30 p-4 rounded-xl shadow-2xl backdrop-blur-md z-50 pointer-events-none ring-1 ring-white/5"
+            >
+              <div className="flex items-start gap-3">
+                <div className="text-emerald-400 mt-0.5 bg-emerald-500/10 p-1.5 rounded-lg">
+                  <Info size={18} />
+                </div>
+                <div>
+                  <h4 className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-1.5">Did you know?</h4>
+                  <p className="text-slate-300 text-xs leading-relaxed font-medium">
+                    The transparent green columns represent other possible aggregations 
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
     </div>
   );
 };
