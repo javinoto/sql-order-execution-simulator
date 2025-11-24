@@ -1,4 +1,3 @@
-
 import { User, Order } from './types';
 
 export const USERS: User[] = [
@@ -9,7 +8,6 @@ export const USERS: User[] = [
   { id: 5, name: 'Dieter', country: 'Korea' },
 ];
 
-// New scrambled dataset with 1-to-many relationships and mismatches
 export const ORDERS: Order[] = [
   { id: 101, fkUid: 4, product: 'Laptop', amount: 1200 },
   { id: 102, fkUid: 5, product: 'Keyboard', amount: 150 },
@@ -17,16 +15,16 @@ export const ORDERS: Order[] = [
   { id: 104, fkUid: 2, product: 'Mouse', amount: 80 },
   { id: 105, fkUid: 1, product: 'Headset', amount: 200 },
   { id: 106, fkUid: 1, product: 'Dock', amount: 80 },
-  { id: 107, fkUid: 9, product: 'Unknown', amount: 999 }, // No matching user
+  { id: 107, fkUid: 9, product: 'Unknown', amount: 999 },
 ];
 
 export const STEP_DESCRIPTIONS = [
   { title: "FROM & JOIN", desc: "Load USERS (5 rows) and ORDERS (7 rows). Independent datasets in the void." },
-  { title: "ON users.id = orders.fkUid", desc: "INNER JOIN. Orders snap to matches. Alice, Bob, and Dieter have multiple orders. Chen, Eiko, and 'Unknown' vanish." },
-  { title: "WHERE country IN ('USA', 'Korea', 'UK')", desc: "Filter active. Only USA, Korea and UK. All matches satisfy this condition." },
-  { title: "GROUP BY country", desc: "Grouping by Country. USA, UK, and Korea clusters form." },
-  { title: "HAVING SUM(amount) > 200", desc: "Filtering groups. Korea ($150) is removed as it doesn't meet the threshold." },
-  { title: "ORDER BY amount ASC", desc: "Re-sorting rows by Order Amount. USA ($280) comes before UK ($1200)." },
-  { title: "SELECT name, product, amount", desc: "Projection. Focusing on the requested columns." },
-  { title: "LIMIT 1", desc: "Final Cut. Keeping the top result." }
+  { title: "ON users.id = orders.fkUid", desc: "INNER JOIN. Orders snap to matching users. Alice, Bob, and Dieter remain. Chen, Eiko, and 'Unknown' order vanish." },
+  { title: "WHERE country IN ('USA', 'Korea', 'UK')", desc: "Filter active. Only USA, Korea and UK. Chen's orders (Taiwan) are removed." },
+  { title: "GROUP BY Country", desc: "Grouping by Country. Rows collapse into USA, UK, and Korea buckets." },
+  { title: "HAVING SUM(Amount) > 200", desc: "Filtering groups. Korea ($150) is removed as the group total does not meet the threshold." },
+  { title: "ORDER BY TotalAmount ASC", desc: "Re-sorting rows by TotalAmount. USA ($280) comes before UK ($1200)." },
+  { title: "SELECT Country, SUM(Amount)", desc: "Projection. Focusing only on the requested columns: Country and Total Amount." },
+  { title: "LIMIT 1", desc: "Final Cut. Keeping the top result (USA, $280)." }
 ];

@@ -1,4 +1,3 @@
-
 export interface User {
   id: number;
   name: string;
@@ -7,47 +6,42 @@ export interface User {
 
 export interface Order {
   id: number;
-  fkUid: number; // Renamed from uid to match new spec
+  fkUid: number;
   product: string;
   amount: number;
 }
 
 export interface GridCell {
-  key: string; // Unique ID for Framer Motion layoutId
+  key: string;
   content: string | number;
   type: 'header' | 'data';
-  source: 'user' | 'order' | 'group'; // Added 'group' source
-  colName: string; // To identify column type for logic
+  source: 'user' | 'order' | 'group';
+  colName: string;
   
-  // Visual Properties calculated per step
   gridRow: number;
   gridCol: number;
   isVisible: boolean;
-  isDimmed?: boolean; // For LIMIT step
-  colorTheme: 'cyan' | 'fuchsia' | 'neutral' | 'emerald' | 'emeraldSoft'; // Added emerald
+  isDimmed?: boolean;
+  isGhost?: boolean; // New property for the transition effect
+  colorTheme: 'cyan' | 'fuchsia' | 'neutral' | 'emerald' | 'emeraldSoft';
   
-  // New properties for Group By visualization
   subtitle?: string;
   customOpacity?: number;
 }
 
-// Represents a joined row of data before it's broken into cells
 export interface UnifiedRow {
-  rowId: string; // unique composite ID
+  rowId: string;
   user: User | null;
   order: Order | null;
   
-  // Meta flags for visualization
-  isMatched: boolean; // True if Inner Join succeeds
-  isSecondaryUser: boolean; // True if this is a duplicate user row (for 1-to-many joins)
+  isMatched: boolean;
+  isSecondaryUser: boolean;
   
-  // Filtering flags
-  isFilteredByWhere: boolean; // True if removed by WHERE
-  isFilteredByLimit: boolean; // True if removed by LIMIT
+  isFilteredByWhere: boolean;
+  isFilteredByLimit: boolean;
   
-  // Layout helpers
-  originalUserIndex: number; // For Step 0 positioning
-  originalOrderIndex: number; // For Step 0 positioning
+  originalUserIndex: number;
+  originalOrderIndex: number;
 }
 
 export enum Step {
