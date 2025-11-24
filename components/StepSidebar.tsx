@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { STEP_DESCRIPTIONS } from '../constants';
 import { Step } from '../types';
 import { SQLConsole } from './SQLConsole';
@@ -31,24 +32,22 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
 }) => {
 
   return (
-    <aside className="w-full md:w-[480px] lg:w-[580px] h-full bg-[#020617] border-r border-white/5 flex flex-col z-40 shrink-0 relative shadow-2xl">
+    <aside className="w-full md:w-[480px] lg:w-[480px] h-full bg-[#020617] border-r border-white/5 flex flex-col z-40 shrink-0 relative shadow-2xl">
       
       {/* 1. HEADER */}
-      <div className="h-20 flex items-end justify-center pb-5 flex-shrink-0 select-none border-b border-white/5 bg-[#020617]">
+      <div className="h-20 flex items-end justify-center pb-5 flex-shrink-0 select-none border-b border-white/5 bg-[#020617] z-20">
          <div className="flex flex-col items-center gap-1.5">
             <span className="text-lg font-black text-white tracking-[0.3em] uppercase font-sans drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-               SQL Engine
+               SQL ORDER EXECUTION
             </span>
             <div className="w-12 h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-80" />
          </div>
       </div>
 
-      {/* 2. PIPELINE: Compactado */}
-      <div className="flex-1 overflow-y-auto relative scrollbar-hide flex flex-col py-6 w-full bg-[#020617]">
-         {/* Línea Vertebral */}
-         <div className="absolute left-[39px] top-0 bottom-0 w-px bg-white/5" />
-
-         <div className="space-y-4 px-8">  {/* Compactado: space-y-4 en lugar de 6 */}
+      {/* 2. PIPELINE */}
+      <div className="flex-1 overflow-y-auto relative scrollbar-hide flex flex-col py-4 w-full bg-[#020617]">
+         
+         <div className="space-y-1.5 px-8"> 
              {STEP_DESCRIPTIONS.map((info, index) => {
              const isActive = currentStep === index;
              const isPast = currentStep > index;
@@ -56,27 +55,32 @@ export const StepSidebar: React.FC<StepSidebarProps> = ({
 
              return (
                  <div 
-                 key={index}
-                 onClick={() => onStepClick(index)}
-                 className="group cursor-pointer flex items-center gap-5 relative"
+                    key={index}
+                    onClick={() => onStepClick(index)}
+                    className="group cursor-pointer relative flex justify-center items-center py-1" // py-2 da espacio para la placa flotante
                  >
-                     {/* Nodo */}
-                     <div className={`
-                         relative z-10 w-2.5 h-2.5 rounded-full border-[2px] transition-all duration-300 flex-shrink-0
-                         ${isActive 
-                             ? 'bg-[#020617] border-cyan-400 scale-125 shadow-[0_0_10px_cyan]' 
-                             : isPast 
-                                 ? 'bg-cyan-900 border-cyan-800' 
-                                 : 'bg-[#020617] border-slate-800 group-hover:border-slate-500'
-                         }
-                     `} />
+                     {/* EL FONDO FLOTANTE (Magic Motion) */}
+                     {isActive && (
+                        <motion.div
+                            layoutId="activeStepPlate" // Esto conecta todos los pasos
+                            className="absolute inset-0 bg-[#0B1221] border border-cyan-500/30 rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.1)] z-0"
+                            initial={false}
+                            transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30
+                            }}
+                        />
+                     )}
 
-                     {/* Texto */}
+                     {/* TEXTO */}
                      <span className={`
-                         font-mono text-sm md:text-lg tracking-[0.08em] transition-all duration-300 uppercase
+                         relative z-10 font-mono text-sm md:text-lg tracking-[0.08em] uppercase transition-colors duration-300
                          ${isActive 
-                             ? 'text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(34,211,238,0.5)] pl-1' 
-                             : 'text-slate-500 font-medium group-hover:text-slate-300'
+                             ? 'text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]' 
+                             : isPast 
+                                ? 'text-slate-600' // Pasados oscuros
+                                : 'text-slate-500 group-hover:text-slate-300' // Futuros
                          }
                      `}>
                          {cleanTitle}

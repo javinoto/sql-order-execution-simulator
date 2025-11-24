@@ -51,7 +51,7 @@ export const SQLConsole: React.FC<SQLConsoleProps> = ({ step, onNext, onPrev, on
     <div className="w-full flex flex-col gap-3"> {/* Gap reducido entre visor y controles */}
       
       {/* 1. VISOR DE CÓDIGO (Altura ajustada para compacidad) */}
-      <div className="relative bg-[#0B1121] border border-white/10 rounded-xl overflow-hidden shadow-inner flex flex-col h-[320px]">
+      <div className="relative bg-[#0B1121] border border-white/10 rounded-xl overflow-hidden shadow-inner flex flex-col h-[318px]">
           
           {/* Fondo Grid sutil */}
           <div className="absolute inset-0 opacity-10 pointer-events-none" 
